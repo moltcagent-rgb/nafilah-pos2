@@ -126,7 +126,7 @@ export default function KasirPage() {
 
   return (
     <div className="pb-8">
-      <header className="px-5 pt-5 pb-3">
+      <header className="px-5 lg:px-8 pt-5 pb-3">
         <h1 className="text-2xl font-extrabold text-stone-900 tracking-tight">Pilih Menu</h1>
         <p className="text-sm text-stone-400 mt-0.5">Sentuh menu untuk mulai pesanan baru</p>
 
@@ -148,7 +148,7 @@ export default function KasirPage() {
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
                 activeCategory === cat
-                  ? 'bg-primary-500 text-stone-900 shadow-sm'
+                  ? 'bg-primary-500 text-white shadow-sm'
                   : 'bg-white border border-stone-200 text-stone-500'
               }`}
             >
@@ -158,14 +158,14 @@ export default function KasirPage() {
         </div>
       </header>
 
-      <main className="px-5 pt-2 grid grid-cols-2 gap-3">
+      <main className="px-5 lg:px-8 pt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         {loading && (
-          <div className="col-span-2">
+          <div className="col-span-full">
             <Spinner label="Memuat menu..." />
           </div>
         )}
         {!loading && visibleItems.length === 0 && (
-          <p className="col-span-2 text-center text-stone-400 text-sm py-10">
+          <p className="col-span-full text-center text-stone-400 text-sm py-10">
             Menu tidak ditemukan.
           </p>
         )}
@@ -200,7 +200,7 @@ export default function KasirPage() {
                   {qty === 0 ? (
                     <button
                       onClick={() => addToCart(item.id)}
-                      className="w-9 h-9 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                      className="w-9 h-9 rounded-full bg-primary-500 text-white flex items-center justify-center active:scale-90 transition-transform shadow-sm"
                       aria-label={`Tambah ${item.name}`}
                     >
                       <Plus size={18} strokeWidth={2.5} />
@@ -209,7 +209,7 @@ export default function KasirPage() {
                     <div className="flex items-center gap-1.5 bg-stone-900 rounded-full pl-1 pr-1 py-1">
                       <button
                         onClick={() => decFromCart(item.id)}
-                        className="w-7 h-7 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center"
+                        className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center"
                         aria-label={`Kurangi ${item.name}`}
                       >
                         <Minus size={14} strokeWidth={2.5} />
@@ -219,7 +219,7 @@ export default function KasirPage() {
                       </span>
                       <button
                         onClick={() => addToCart(item.id)}
-                        className="w-7 h-7 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center"
+                        className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center"
                         aria-label={`Tambah ${item.name}`}
                       >
                         <Plus size={14} strokeWidth={2.5} />
@@ -236,10 +236,10 @@ export default function KasirPage() {
       {cartCount > 0 && !cartOpen && (
         <button
           onClick={() => setCartOpen(true)}
-          className="fixed bottom-24 left-5 right-5 max-w-md mx-auto bg-stone-900 text-white rounded-full py-4 px-5 flex items-center justify-between shadow-ticket z-40 animate-slide-up active:scale-[0.98] transition-transform"
+          className="fixed bottom-24 lg:bottom-8 left-5 right-5 lg:left-24 max-w-md lg:max-w-lg mx-auto bg-stone-900 text-white rounded-full py-4 px-5 flex items-center justify-between shadow-ticket z-40 animate-slide-up active:scale-[0.98] transition-transform"
         >
           <span className="flex items-center gap-2.5 text-sm font-bold">
-            <span className="w-7 h-7 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center">
+            <span className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center">
               <ShoppingBag size={14} strokeWidth={2.5} />
             </span>
             {cartCount} item
@@ -251,9 +251,9 @@ export default function KasirPage() {
       )}
 
       {cartOpen && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center lg:p-4">
           <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setCartOpen(false)} />
-          <div className="relative w-full max-w-md mx-auto bg-white rounded-t-[32px] p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+          <div className="relative w-full max-w-md lg:max-w-lg mx-auto bg-white rounded-t-[32px] lg:rounded-[32px] p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-extrabold text-xl text-stone-900">Pesanan Anda</h2>
               <button
@@ -277,14 +277,14 @@ export default function KasirPage() {
                   <div className="flex items-center gap-2 bg-stone-900 rounded-full pl-1 pr-1 py-1">
                     <button
                       onClick={() => decFromCart(l.id)}
-                      className="w-7 h-7 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center"
+                      className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center"
                     >
                       <Minus size={14} strokeWidth={2.5} />
                     </button>
                     <span className="text-sm w-4 text-center font-mono text-white">{l.qty}</span>
                     <button
                       onClick={() => addToCart(l.id)}
-                      className="w-7 h-7 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center"
+                      className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center"
                     >
                       <Plus size={14} strokeWidth={2.5} />
                     </button>
@@ -311,7 +311,7 @@ export default function KasirPage() {
             <button
               onClick={submitOrder}
               disabled={submitting}
-              className="w-full bg-primary-500 text-stone-900 rounded-2xl py-4 font-extrabold text-sm disabled:opacity-60 btn-shine"
+              className="w-full bg-primary-500 text-white rounded-2xl py-4 font-extrabold text-sm disabled:opacity-60 btn-shine"
             >
               {submitting ? 'Menyimpan...' : 'Buat Pesanan & Cetak Nota'}
             </button>
@@ -397,7 +397,7 @@ export default function KasirPage() {
               </button>
               <button
                 onClick={markPaidNow}
-                className="w-full bg-primary-500 text-stone-900 rounded-2xl py-3.5 font-extrabold text-sm flex items-center justify-center gap-2 btn-shine"
+                className="w-full bg-primary-500 text-white rounded-2xl py-3.5 font-extrabold text-sm flex items-center justify-center gap-2 btn-shine"
               >
                 <Check size={16} strokeWidth={2.5} /> Sudah Dibayar, Proses Pesanan
               </button>

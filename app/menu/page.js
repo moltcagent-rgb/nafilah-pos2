@@ -130,12 +130,12 @@ export default function MenuPage() {
 
   return (
     <div className="pb-8">
-      <header className="px-5 pt-5 pb-3">
+      <header className="px-5 lg:px-8 pt-5 pb-3">
         <h1 className="text-2xl font-extrabold text-stone-900 tracking-tight">Menu &amp; Harga</h1>
         <p className="text-sm text-stone-400 mt-0.5">Kelola menu yang dijual di kedai</p>
       </header>
 
-      <main className="px-5 pt-2 space-y-6">
+      <main className="px-5 lg:px-8 pt-2 space-y-6">
         {loading && <Spinner label="Memuat menu..." />}
         {!loading && items.length === 0 && (
           <p className="text-center text-stone-400 text-sm py-10">
@@ -147,7 +147,7 @@ export default function MenuPage() {
             <h2 className="text-xs font-extrabold text-stone-400 uppercase tracking-wide mb-2.5">
               {cat}
             </h2>
-            <div className="space-y-2.5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {list.map((item, idx) => (
                 <div
                   key={item.id}
@@ -207,16 +207,16 @@ export default function MenuPage() {
 
       <button
         onClick={openNew}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-primary-500 text-stone-900 flex items-center justify-center shadow-ticket z-40 active:scale-90 transition-transform btn-shine"
+        className="fixed bottom-24 lg:bottom-8 right-5 lg:right-10 w-14 h-14 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-ticket z-40 active:scale-90 transition-transform btn-shine"
         aria-label="Tambah menu"
       >
         <Plus size={26} strokeWidth={2.5} />
       </button>
 
       {form && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center lg:p-4">
           <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setForm(null)} />
-          <div className="relative w-full max-w-md mx-auto bg-white rounded-t-[32px] p-6 animate-slide-up">
+          <div className="relative w-full max-w-md lg:max-w-lg mx-auto bg-white rounded-t-[32px] lg:rounded-[32px] p-6 max-h-[85vh] overflow-y-auto animate-slide-up">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-extrabold text-xl text-stone-900">
                 {form.id ? 'Edit Menu' : 'Tambah Menu'}
@@ -331,7 +331,7 @@ export default function MenuPage() {
             <button
               onClick={save}
               disabled={saving || imageProcessing}
-              className="w-full bg-primary-500 text-stone-900 rounded-2xl py-4 font-extrabold text-sm mt-6 disabled:opacity-60 btn-shine"
+              className="w-full bg-primary-500 text-white rounded-2xl py-4 font-extrabold text-sm mt-6 disabled:opacity-60 btn-shine"
             >
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>

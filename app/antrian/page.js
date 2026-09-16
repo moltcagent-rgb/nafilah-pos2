@@ -98,7 +98,7 @@ export default function AntrianPage() {
 
   return (
     <div className="pb-8">
-      <header className="px-5 pt-5 pb-3">
+      <header className="px-5 lg:px-8 pt-5 pb-3">
         <h1 className="text-2xl font-extrabold text-stone-900 tracking-tight">Antrian Pesanan</h1>
         <p className="text-sm text-stone-400 mt-0.5">Kelola status pesanan yang masuk</p>
 
@@ -121,10 +121,14 @@ export default function AntrianPage() {
         </div>
       </header>
 
-      <main className="px-5 pt-2 space-y-3">
-        {loading && <Spinner label="Memuat..." />}
+      <main className="px-5 lg:px-8 pt-2 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {loading && (
+          <div className="col-span-full">
+            <Spinner label="Memuat..." />
+          </div>
+        )}
         {!loading && filtered.length === 0 && (
-          <p className="text-center text-stone-400 text-sm py-10">Tidak ada pesanan di status ini</p>
+          <p className="col-span-full text-center text-stone-400 text-sm py-10">Tidak ada pesanan di status ini</p>
         )}
         {filtered.map((order, idx) => (
           <div
@@ -187,7 +191,7 @@ export default function AntrianPage() {
                 {NEXT_STATUS[order.status] && (
                   <button
                     onClick={() => advance(order)}
-                    className="text-xs bg-primary-500 text-stone-900 font-extrabold px-4 py-2.5 rounded-xl active:scale-95 transition-transform"
+                    className="text-xs bg-primary-500 text-white font-extrabold px-4 py-2.5 rounded-xl active:scale-95 transition-transform"
                   >
                     {NEXT_ACTION_LABEL[order.status]}
                   </button>

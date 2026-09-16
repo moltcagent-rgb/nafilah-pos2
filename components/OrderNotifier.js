@@ -227,8 +227,8 @@ export default function OrderNotifier() {
   }, []);
 
   return (
-    <div className="fixed top-4 left-0 right-0 z-50 pointer-events-none">
-      <div className="max-w-md mx-auto px-4 flex justify-end items-center gap-2">
+    <div className="fixed top-4 left-0 right-0 lg:left-20 z-50 pointer-events-none">
+      <div className="max-w-md lg:max-w-4xl mx-auto px-4 lg:px-8 flex justify-end items-center gap-2">
         {justEnabled && (
           <span className="pointer-events-none text-[11px] font-bold text-white bg-stone-900 px-3 py-1.5 rounded-full shadow-md">
             Notifikasi suara aktif
@@ -239,7 +239,7 @@ export default function OrderNotifier() {
           onClick={toggle}
           aria-label={enabled ? 'Matikan notifikasi suara' : 'Aktifkan notifikasi suara'}
           className={`pointer-events-auto w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-colors ${
-            enabled ? 'bg-primary-500 text-stone-900' : 'bg-white text-stone-400'
+            enabled ? 'bg-primary-500 text-white' : 'bg-white text-stone-400'
           }`}
         >
           {enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}

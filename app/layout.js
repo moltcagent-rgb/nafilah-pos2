@@ -28,17 +28,21 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#1c1917',
+  // Sebelumnya zoom dimatikan total (userScalable: false) — itu praktik UX
+  // yang buruk untuk aksesibilitas (pengguna dengan penglihatan terbatas
+  // butuh bisa pinch-zoom). Sekarang zoom tetap diizinkan sampai 5x.
+  maximumScale: 5,
+  themeColor: '#064e3b',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
-      <body className={`${sans.variable} ${mono.variable} font-sans bg-amber-50/40`}>
-        <div className="max-w-md mx-auto min-h-screen bg-white relative pb-24 shadow-sm">
-          <div className="flex items-center gap-3 px-5 pt-5 pb-6 bg-stone-900 rounded-b-[32px]">
+      <body
+        className={`${sans.variable} ${mono.variable} font-sans bg-stone-100 lg:pl-20`}
+      >
+        <div className="max-w-md lg:max-w-4xl mx-auto min-h-screen bg-white relative pb-24 lg:pb-10 shadow-sm lg:shadow-elevated">
+          <div className="flex items-center gap-3 px-5 pt-5 pb-6 lg:px-8 lg:pt-8 lg:pb-8 bg-gradient-to-br from-primary-900 to-stone-900 rounded-b-[32px]">
             <img src="/logo.png" alt="Nafilah" className="h-11 w-auto" />
             <span className="font-extrabold text-white text-lg tracking-wide">
               NAFILAH KITCHEN
