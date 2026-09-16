@@ -22,9 +22,6 @@ export async function POST(request) {
     const body = await request.json();
     const order = await createOrder({
       customer_name: body.customer_name,
-      phone: body.phone,
-      order_type: body.order_type,
-      delivery_address: body.delivery_address,
       items: body.items,
       total: body.total,
       status: body.status,

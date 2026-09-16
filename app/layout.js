@@ -1,5 +1,7 @@
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import BottomNav from '@/components/BottomNav';
+import OrderNotifier from '@/components/OrderNotifier';
 
 const sans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -35,7 +37,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="id">
       <body className={`${sans.variable} ${mono.variable} font-sans bg-amber-50/40`}>
-        <div className="max-w-md mx-auto min-h-screen bg-white relative shadow-sm">
+        <div className="max-w-md mx-auto min-h-screen bg-white relative pb-24 shadow-sm">
           <div className="flex items-center gap-3 px-5 pt-5 pb-6 bg-stone-900 rounded-b-[32px]">
             <img src="/logo.png" alt="Nafilah" className="h-11 w-auto" />
             <span className="font-extrabold text-white text-lg tracking-wide">
@@ -44,6 +46,8 @@ export default function RootLayout({ children }) {
           </div>
           {children}
         </div>
+        <OrderNotifier />
+        <BottomNav />
       </body>
     </html>
   );

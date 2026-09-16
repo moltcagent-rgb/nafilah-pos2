@@ -1,174 +1,173 @@
 # Nafilah POS
 
-Aplikasi kasir + pemesanan online untuk kedai Nafilah. Sekarang ada **2 sisi**:
+Aplikasi kasir untuk kedai Nafilah. Berbasis web (Next.js), database **Turso**
+(SQLite di cloud, diakses lewat HTTP). Bisa dipakai langsung dari browser HP Android —
+tidak perlu install dari Play Store.
 
-- **Staff** — Kasir, Antrian, Menu, Laporan (dikunci PIN, cuma buat internal)
-- **Pelanggan** — halaman pemesanan publik mirip Grab Food, khusus lingkup perumahan (bisa disebar linknya ke pelanggan)
+> Kenapa Turso (bukan MySQL/Supabase)? Turso diakses lewat HTTP biasa (port 443), bukan
+> protokol database mentah di port khusus — jadi tidak gampang diblokir jaringan/ISP
+> seperti yang sering terjadi pada MySQL self-hosted, dan cocok untuk deploy ke
+> lingkungan serverless seperti Vercel.
 
-Berbasis web (Next.js), database **Turso** (SQLite di cloud, diakses lewat HTTP).
-
-## Struktur URL
-
-| URL | Untuk siapa | Isi |
-|---|---|---|
-| `/pesan` | **Pelanggan** | Browse menu, order (ambil di toko / diantar) |
-| `/lacak/[id]` | **Pelanggan** | Lacak status pesanan tertentu secara live |
-| `/pesanan-saya` | **Pelanggan** | Riwayat pesanan dari HP/browser yang sama |
-| `/staff/login` | Staff | Masuk pakai PIN |
-| `/` | Staff (terkunci) | Kasir — buat pesanan manual untuk pelanggan yang datang langsung |
-| `/antrian` | Staff (terkunci) | Kelola status semua pesanan (masuk → diproses → siap → selesai) |
-| `/menu` | Staff (terkunci) | CRUD menu, harga, foto |
-| `/laporan` | Staff (terkunci) | Rekap omset |
-
-**Link yang disebar ke pelanggan cukup `/pesan`** — misal
-`https://nafilah-pos.vercel.app/pesan`. Halaman `/`, `/antrian`, `/menu`,
-`/laporan` otomatis terkunci PIN, jadi aman kalau pelanggan iseng coba buka
-alamat lain.
-
-## Alur pesanan pelanggan
+## Alur pesanan
 
 ```
-Pelanggan buka /pesan → pilih menu → checkout
-   (isi nama, no HP, pilih Ambil di Toko / Diantar + alamat)
-        │
-        ▼  otomatis masuk ke antrian staff, status: Menunggu Bayar
-Pelanggan diarahkan ke /lacak/[id] — bisa pantau live tanpa perlu refresh
-        │
+Kasir pilih menu → Buat Pesanan (nota terbit)
+        │  status: Menunggu Bayar
         ▼
-Staff proses di halaman Antrian seperti biasa (Diproses → Siap → Selesai)
-        │
+Customer bayar di kasir → Tandai Sudah Bayar
+        │  status: Diproses
         ▼
-Pelanggan lihat status "Selesai" di halaman lacak, atau dihubungi lewat
-no HP yang tadi diisi untuk koordinasi pengantaran/pengambilan
+Dapur menyiapkan pesanan → Tandai Siap Diambil
+        │  status: Siap Diambil
+        ▼
+Customer tunjukkan nota → Selesai / Sudah Diambil
+        │  status: Selesai
 ```
 
-Alur pesanan **staff** (input manual di Kasir untuk pelanggan yang datang
-langsung ke toko) tetap sama seperti sebelumnya.
+Ada juga status **Dibatalkan** untuk pesanan yang batal sebelum dibayar.
 
-## Keamanan — WAJIB dibaca sebelum sebar link ke pelanggan
+Setiap halaman **polling otomatis tiap 4 detik** (lihat `lib/apiClient.js`) supaya
+perubahan dari HP/tab lain ikut muncul tanpa perlu refresh manual.
 
-Karena sekarang linknya bakal dipegang orang luar, halaman staff dikunci PIN
-lewat `middleware.js` + cookie. **Supaya proteksi ini aktif, wajib set
-environment variable `STAFF_PIN`** — kalau kosong, halaman staff TIDAK
-terkunci sama sekali (dianggap mode development).
+## Halaman aplikasi
 
-- Lokal: isi `STAFF_PIN=...` di `.env.local`
-- Vercel: tambahkan `STAFF_PIN` di **Settings → Environment Variables**
+- **Kasir** (`/`) — pilih menu, atur jumlah, buat pesanan, nota langsung muncul.
+- **Antrian** (`/antrian`) — daftar pesanan per status, tombol untuk memproses tiap tahap.
+- **Menu** (`/menu`) — tambah/edit/hapus menu, atur harga & kategori, tandai stok habis.
+- **Laporan** (`/laporan`) — rekap omset & menu terlaris per hari/minggu/bulan/kustom.
 
-PIN yang sama dipakai semua staff (tidak ada akun per-orang) — cukup untuk
-skala 1 toko. Ganti PIN kapan saja lewat env var, staff lama otomatis perlu
-login ulang.
+## Arsitektur
 
-## Setup database Turso (kolom baru)
+```
+Browser (React, app/*)
+   │  fetch()
+   ▼
+Next.js API routes (app/api/menu, app/api/orders)
+   │  @libsql/client (HTTP)
+   ▼
+Turso (SQLite di cloud)
+```
 
-Kalau database Turso Anda sudah pernah di-setup sebelumnya (sebelum fitur
-pemesanan pelanggan ini), tambahkan kolom baru secara manual:
+- `lib/db.js` — koneksi Turso + semua query SQL (dijalankan di server saja).
+- `lib/apiClient.js` — helper `fetch()` yang dipakai halaman React untuk memanggil API di atas.
+- `app/api/menu/`, `app/api/orders/` — endpoint REST sederhana (GET/POST/PATCH/DELETE).
+
+---
+
+## 1. Buat database Turso (gratis)
+
+1. Daftar/masuk di **https://turso.tech** (bisa pakai akun GitHub).
+2. Install **Turso CLI**:
+   - macOS/Linux: `curl -sSfL https://get.tur.so/install.sh | bash`
+   - Windows: pakai **WSL** (Windows Subsystem for Linux) lalu jalankan perintah di atas
+     di dalam WSL, atau install lewat **Scoop**: `scoop install turso`
+3. Login lewat CLI (akan membuka browser untuk autentikasi):
+   ```bash
+   turso auth login
+   ```
+4. Buat database:
+   ```bash
+   turso db create nafilah-pos
+   ```
+5. Ambil URL koneksinya:
+   ```bash
+   turso db show nafilah-pos --url
+   ```
+   Hasilnya seperti `libsql://nafilah-pos-username.turso.io` — catat ini.
+6. Buat token akses:
+   ```bash
+   turso db tokens create nafilah-pos
+   ```
+   Hasilnya string panjang — catat ini juga.
+
+## 2. Import skema
 
 ```bash
-turso db shell nafilah-pos "ALTER TABLE orders ADD COLUMN phone TEXT;"
-turso db shell nafilah-pos "ALTER TABLE orders ADD COLUMN order_type TEXT NOT NULL DEFAULT 'pickup';"
-turso db shell nafilah-pos "ALTER TABLE orders ADD COLUMN delivery_address TEXT;"
+turso db shell nafilah-pos < turso/schema.sql
 ```
 
-(Kalau ini instalasi baru dari nol, cukup `turso db shell nafilah-pos < turso/schema.sql` seperti biasa — kolom-kolom ini sudah termasuk di skema.)
+Ini otomatis membuat tabel `menu_items`, `order_counters`, `orders`, dan mengisi 6 menu
+contoh (boleh dihapus/diedit nanti lewat halaman Menu).
 
-## Jalankan di komputer
+Cek isinya (opsional):
+```bash
+turso db shell nafilah-pos "SELECT * FROM menu_items;"
+```
+
+## 3. Jalankan aplikasi di komputer
+
+Butuh [Node.js](https://nodejs.org) versi 18 ke atas.
 
 ```bash
 npm install
 cp .env.local.example .env.local
 ```
 
-Isi `.env.local`:
+Isi `.env.local` dengan nilai dari langkah 1:
+
 ```
-TURSO_DATABASE_URL=libsql://nama-database-anda.turso.io
-TURSO_AUTH_TOKEN=isi-token-dari-turso
-STAFF_PIN=1234
+TURSO_DATABASE_URL=libsql://nafilah-pos-username.turso.io
+TURSO_AUTH_TOKEN=isi-token-panjang-dari-turso
 ```
+
+Lalu:
 
 ```bash
 npm run dev
 ```
 
-- Buka `http://localhost:3000/pesan` untuk coba sisi pelanggan.
-- Buka `http://localhost:3000/` untuk sisi staff — akan diarahkan ke
-  `/staff/login`, masukkan PIN yang tadi diisi di `.env.local`.
+Buka `http://localhost:3000` — kalau 6 menu contoh muncul, koneksi ke Turso sudah benar.
 
-## Deploy ke Vercel
+## 4. Deploy ke Vercel
 
-Sama seperti sebelumnya (push ke GitHub → import di Vercel), tambahkan
-environment variables:
-- `TURSO_DATABASE_URL`
-- `TURSO_AUTH_TOKEN`
-- `STAFF_PIN`
+1. Push folder project ini ke repository GitHub baru.
+2. Buka **https://vercel.com** → **Add New → Project** → import repo tersebut.
+3. Di bagian **Environment Variables**, tambahkan `TURSO_DATABASE_URL` dan
+   `TURSO_AUTH_TOKEN` dengan nilai yang sama seperti di `.env.local`.
+4. Klik **Deploy**. Setelah selesai, Anda dapat URL seperti
+   `https://nafilah-pos.vercel.app` — bisa dibuka dari HP mana saja, kapan saja, tanpa
+   perlu komputer server menyala.
+5. Di HP, buka URL tersebut di Chrome → menu titik tiga (⋮) → **Add to Home screen**
+   supaya jadi ikon fullscreen seperti aplikasi native.
 
-Setelah deploy:
-1. Coba akses `/` dari browser mode Incognito → harus otomatis diarahkan ke `/staff/login`. Kalau tidak, cek lagi `STAFF_PIN` sudah ke-set di Vercel.
-2. Login pakai PIN, cek semua halaman staff normal.
-3. Buka `/pesan` di Incognito lain (mensimulasikan pelanggan) → pastikan bisa order tanpa diminta PIN.
+---
 
-## Arsitektur
-
-```
-Browser Pelanggan (/pesan, /lacak, /pesanan-saya)
-   │  fetch() — tanpa perlu login
-   ▼
-Browser Staff (/, /antrian, /menu, /laporan)
-   │  fetch() — perlu cookie staff_auth (dari PIN)
-   ▼
-middleware.js — cek cookie sebelum lolos ke halaman/API staff
-   │
-   ▼
-Next.js API routes (app/api/menu, app/api/orders, app/api/staff)
-   │  @libsql/client (HTTP)
-   ▼
-Turso (SQLite di cloud)
-```
-
-- `middleware.js` — pintu gerbang: cek PIN untuk halaman & API staff, biarkan lewat untuk halaman & API pelanggan.
-- `lib/staffAuth.js` — hash PIN jadi token cookie (PIN asli tidak pernah disimpan di cookie).
-- `lib/db.js` — koneksi Turso + semua query SQL.
-- `lib/apiClient.js` — helper `fetch()` dipakai semua halaman (staff & pelanggan).
-- `lib/myOrders.js` — riwayat pesanan pelanggan disimpan di localStorage HP masing-masing (tanpa perlu akun/login pelanggan).
-
-### Struktur folder halaman
+## Struktur project
 
 ```
 app/
-  layout.js                    → shell global (logo, font) — dipakai semua halaman
-  (staff)/                     → grup route staff (folder ini TIDAK muncul di URL)
-    layout.js                    → tambahan BottomNav + notifikasi suara + tombol logout
-    page.js                       → Kasir  →  URL: /
-    antrian/page.js                → URL: /antrian
-    menu/page.js                    → URL: /menu
-    laporan/page.js                  → URL: /laporan
-  (customer)/                  → grup route pelanggan (folder ini juga tidak muncul di URL)
-    layout.js                    → shell polos, tanpa BottomNav staff
-    pesan/page.js                  → URL: /pesan
-    lacak/[id]/page.js              → URL: /lacak/xxxxx
-    pesanan-saya/page.js             → URL: /pesanan-saya
-  staff/login/page.js           → URL: /staff/login (di luar grup, harus bisa diakses sebelum login)
+  page.js              → halaman Kasir (pilih menu, buat pesanan)
+  antrian/page.js      → halaman Antrian (kelola status pesanan)
+  menu/page.js         → halaman Menu (CRUD menu & harga)
+  laporan/page.js       → halaman Laporan (rekap omset)
+  layout.js             → layout global, font, bottom navigation
   api/
-    menu/, orders/                → endpoint dipakai staff & pelanggan (dibedakan lewat middleware)
-    staff/login/, staff/logout/     → verifikasi PIN
-middleware.js                    → penjaga akses (di root project, sejajar folder app/)
+    menu/route.js       → GET (list) & POST (tambah menu)
+    menu/[id]/route.js  → PATCH (update/toggle) & DELETE menu
+    orders/route.js     → GET (list/filter tanggal) & POST (buat pesanan)
+    orders/[id]/route.js → PATCH (ubah status pesanan)
+components/
+  BottomNav.js           → navigasi bawah + badge jumlah antrian aktif
+lib/
+  db.js                  → koneksi Turso (@libsql/client) + semua query SQL
+  apiClient.js            → helper fetch() dipakai halaman React + interval polling
+  format.js                → format Rupiah & waktu
+  statusConfig.js           → label, warna, dan alur status pesanan
+  dateRange.js               → hitung rentang tanggal untuk halaman Laporan
+turso/
+  schema.sql                 → skema database + data contoh (import sekali di awal)
 ```
 
-## Rencana pengembangan lanjutan (kalau nanti ajak UMKM lain)
+## Ide pengembangan lanjutan
 
-Struktur saat ini sengaja dipisah rapi antara "sisi pelanggan" dan "sisi
-staff" supaya nanti gampang dikembangkan jadi multi-penjual:
-- Tambah tabel `vendors` (nama toko, PIN staff masing-masing, dll)
-- Tambah kolom `vendor_id` di `menu_items` dan `orders`
-- Halaman `/pesan` jadi menampilkan pilihan toko dulu sebelum menu
-- Tiap toko login staff dengan PIN masing-masing, cuma lihat pesanan tokonya sendiri
-
-Belum diimplementasikan sekarang (sesuai keputusan: fokus toko Nafilah dulu),
-tapi arsitektur `middleware.js` + pemisahan grup route ini dirancang supaya
-perluasan itu tidak perlu bongkar ulang dari nol.
-
-## Ide pengembangan lain
-
-- **Cetak struk ke printer thermal** — integrasi Web Bluetooth.
-- **WhatsApp notifikasi ke pelanggan** — kirim update status lewat WA API pihak ketiga (Fonnte, dll), pakai nomor HP yang sudah tersimpan di setiap pesanan.
-- **Ongkir otomatis** — saat ini pengiriman diasumsikan gratis/flat dalam 1 perumahan; kalau butuh hitung ongkir, bisa ditambah field harga kirim.
+- **PIN/login staff** — saat ini aplikasi terbuka bebas tanpa login.
+- **Cetak struk ke printer thermal** — nota saat ini tampil di layar; kalau punya printer
+  Bluetooth thermal, bisa ditambahkan integrasi Web Bluetooth atau print via browser.
+- **Backup database** — Turso punya point-in-time restore bawaan (lihat dashboard/CLI:
+  `turso db show nafilah-pos`), tapi untuk data penting sebaiknya tetap rutin export:
+  ```bash
+  turso db shell nafilah-pos ".dump" > backup.sql
+  ```
+- **Nomor nota harian** — `order_number` reset otomatis tiap hari (UTC) mulai dari 1,
+  diatur lewat tabel `order_counters` + transaksi di `lib/db.js` (fungsi `createOrder`).
